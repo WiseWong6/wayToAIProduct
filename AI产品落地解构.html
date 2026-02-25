@@ -1,0 +1,2168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI产品落地解构 | 演变 · 解构 · 工程化</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* ===========================================
+           CSS CUSTOM PROPERTIES (THEME)
+           =========================================== */
+        :root {
+            /* Core Colors - Neon Cyber Palette */
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #111118;
+            --bg-card: rgba(17, 17, 24, 0.8);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.6);
+            --text-muted: rgba(255, 255, 255, 0.4);
+            --accent-cyan: #00ffcc;
+            --accent-magenta: #ff00ff;
+            --accent-blue: #00ccff;
+            --accent-purple: #9966ff;
+            
+            /* Glow Effects */
+            --glow-cyan: 0 0 20px rgba(0, 255, 204, 0.4);
+            --glow-magenta: 0 0 20px rgba(255, 0, 255, 0.4);
+            --glow-blue: 0 0 20px rgba(0, 204, 255, 0.4);
+            
+            /* Typography - Responsive with clamp() */
+            --font-display: 'Noto Sans SC', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --title-size: clamp(1.8rem, 5vw, 3.5rem);
+            --subtitle-size: clamp(1rem, 2.5vw, 1.5rem);
+            --body-size: clamp(0.75rem, 1.4vw, 1rem);
+            --small-size: clamp(0.65rem, 1.2vw, 0.875rem);
+            
+            /* Spacing */
+            --slide-padding: clamp(1rem, 4vw, 3rem);
+            --content-gap: clamp(0.75rem, 2vw, 1.5rem);
+            
+            /* Animation */
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            --duration-normal: 0.6s;
+        }
+
+        /* ===========================================
+           BASE STYLES
+           =========================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            scroll-snap-type: y mandatory;
+            height: 100%;
+            overflow-x: hidden;
+        }
+
+        body {
+            font-family: var(--font-display);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            min-height: 100%;
+        }
+
+        /* ===========================================
+           SLIDE CONTAINER - VIEWPORT FITTING
+           =========================================== */
+        .slide {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            scroll-snap-align: start;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            background: var(--bg-primary);
+        }
+
+        .slide-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: var(--slide-padding);
+            max-height: 100%;
+            overflow: hidden;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* ===========================================
+           BACKGROUND EFFECTS
+           =========================================== */
+        .grid-bg {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(0, 255, 204, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 204, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 30s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(50px); }
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .orb-cyan {
+            background: var(--accent-cyan);
+            animation: orbFloat 10s ease-in-out infinite;
+        }
+
+        .orb-magenta {
+            background: var(--accent-magenta);
+            animation: orbFloat 10s ease-in-out infinite reverse;
+        }
+
+        .orb-blue {
+            background: var(--accent-blue);
+            animation: orbFloat 12s ease-in-out infinite;
+        }
+
+        @keyframes orbFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(30px, -30px) scale(1.1); }
+        }
+
+        .scanline {
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 255, 204, 0.02) 2px,
+                rgba(0, 255, 204, 0.02) 4px
+            );
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        /* ===========================================
+           TYPOGRAPHY
+           =========================================== */
+        .slide-title {
+            font-size: var(--title-size);
+            font-weight: 900;
+            line-height: 1.2;
+            margin-bottom: var(--content-gap);
+        }
+
+        .slide-title .accent {
+            background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-magenta) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .slide-subtitle {
+            font-size: var(--subtitle-size);
+            color: var(--text-secondary);
+            margin-bottom: var(--content-gap);
+        }
+
+        .body-text {
+            font-size: var(--body-size);
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .mono {
+            font-family: var(--font-mono);
+        }
+
+        .tag {
+            font-family: var(--font-mono);
+            font-size: var(--small-size);
+            color: var(--accent-cyan);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+
+        /* ===========================================
+           ANIMATIONS
+           =========================================== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity var(--duration-normal) var(--ease-out-expo),
+                        transform var(--duration-normal) var(--ease-out-expo);
+        }
+
+        .slide.visible .reveal {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal:nth-child(1) { transition-delay: 0.1s; }
+        .reveal:nth-child(2) { transition-delay: 0.2s; }
+        .reveal:nth-child(3) { transition-delay: 0.3s; }
+        .reveal:nth-child(4) { transition-delay: 0.4s; }
+        .reveal:nth-child(5) { transition-delay: 0.5s; }
+
+        /* ===========================================
+           COMPONENTS
+           =========================================== */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid rgba(0, 255, 204, 0.2);
+            border-radius: 8px;
+            padding: clamp(0.75rem, 2vw, 1.25rem);
+            backdrop-filter: blur(10px);
+        }
+
+        .card-glow {
+            box-shadow: 0 0 30px rgba(0, 255, 204, 0.1), inset 0 0 30px rgba(0, 255, 204, 0.05);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: rgba(0, 255, 204, 0.1);
+            border: 1px solid rgba(0, 255, 204, 0.3);
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: var(--small-size);
+            color: var(--accent-cyan);
+        }
+
+        .code-block {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 255, 204, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: var(--font-mono);
+            font-size: var(--small-size);
+            color: var(--text-secondary);
+            overflow-x: auto;
+            max-height: min(40vh, 300px);
+        }
+
+        .code-block .comment { color: #666; }
+        .code-block .keyword { color: var(--accent-magenta); }
+        .code-block .string { color: var(--accent-cyan); }
+        .code-block .function { color: var(--accent-blue); }
+
+        /* Grid layouts */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--content-gap);
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--content-gap);
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--content-gap);
+        }
+
+        @media (max-width: 768px) {
+            .grid-2, .grid-3, .grid-4 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Timeline */
+        .timeline {
+            display: flex;
+            gap: 1rem;
+            align-items: stretch;
+        }
+
+        .timeline-item {
+            flex: 1;
+            text-align: center;
+            padding: 1rem;
+            border: 1px solid rgba(0, 255, 204, 0.2);
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .timeline-item::after {
+            content: '→';
+            position: absolute;
+            right: -1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--accent-cyan);
+            font-family: var(--font-mono);
+        }
+
+        .timeline-item:last-child::after {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .timeline {
+                flex-direction: column;
+            }
+            .timeline-item::after {
+                content: '↓';
+                right: 50%;
+                top: 100%;
+                transform: translateX(50%);
+            }
+        }
+
+        /* Progress bar */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-magenta));
+            z-index: 1000;
+            transition: width 0.3s ease;
+        }
+
+        /* Navigation dots */
+        .nav-dots {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 1000;
+        }
+
+        .nav-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-dot.active {
+            background: var(--accent-cyan);
+            box-shadow: var(--glow-cyan);
+        }
+
+        @media (max-width: 768px) {
+            .nav-dots { display: none; }
+        }
+
+        /* Slide number */
+        .slide-number {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-family: var(--font-mono);
+            font-size: var(--small-size);
+            color: var(--text-muted);
+            z-index: 10;
+        }
+
+        /* QR Code Modal Styles */
+        .qrcode-btn {
+            background: transparent;
+            border: 1px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.2);
+        }
+
+        .qrcode-btn:hover {
+            background: rgba(0, 255, 204, 0.1);
+            box-shadow: 0 0 30px rgba(0, 255, 204, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            max-width: 400px;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            box-shadow: 0 0 60px rgba(0, 255, 204, 0.3);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-content img {
+            width: 250px;
+            height: 250px;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-content h3 {
+            color: var(--accent-cyan);
+            margin-bottom: 0.5rem;
+            font-size: 1.25rem;
+        }
+
+        .modal-content p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-close {
+            background: rgba(0, 255, 204, 0.1);
+            border: 1px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+            padding: 0.6rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: var(--font-mono);
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(0, 255, 204, 0.2);
+        }
+
+        /* ===========================================
+           RESPONSIVE BREAKPOINTS
+           =========================================== */
+        @media (max-height: 700px) {
+            :root {
+                --slide-padding: clamp(0.75rem, 3vw, 2rem);
+                --content-gap: clamp(0.5rem, 1.5vw, 1rem);
+            }
+            .card { padding: 0.5rem; }
+        }
+
+        @media (max-height: 600px) {
+            .grid-2, .grid-3, .grid-4 { gap: 0.5rem; }
+            .card { padding: 0.4rem; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.2s !important;
+            }
+            html { scroll-behavior: auto; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Progress Bar -->
+    <div class="progress-bar" id="progressBar"></div>
+    
+    <!-- Navigation Dots -->
+    <nav class="nav-dots" id="navDots"></nav>
+
+    <!-- ===========================================
+         SLIDE 1: COVER
+         =========================================== -->
+    <section class="slide" data-slide="1">
+        <div class="grid-bg"></div>
+        <div class="scanline"></div>
+        <div class="orb orb-cyan" style="width: 400px; height: 400px; top: -100px; right: -100px;"></div>
+        <div class="orb orb-magenta" style="width: 300px; height: 300px; bottom: -50px; left: -50px;"></div>
+        
+        <div class="slide-content" style="text-align: center; align-items: center;">
+            <div class="tag reveal">AI ENGINEERING</div>
+            <h1 class="slide-title reveal">
+                AI产品落地解构<br>
+                <span class="accent">演变 · 解构 · 工程化</span>
+            </h1>
+            <p class="slide-subtitle reveal">从认知跃迁到工程实践的技术分享</p>
+            <div class="mono reveal" style="color: var(--accent-cyan); margin-top: 2rem;">
+                > @歪斯Wise
+            </div>
+        </div>
+        <div class="slide-number">01 / 26</div>
+    </section>
+
+    <!-- ===========================================
+         SLIDE 2: AI EVOLUTION INTRO
+         =========================================== -->
+    <section class="slide" data-slide="2">
+        <div class="grid-bg"></div>
+        <div class="scanline"></div>
+        <div class="orb orb-cyan" style="width: 300px; height: 300px; top: 10%; right: 10%;"></div>
+        
+        <div class="slide-content">
+            <div class="tag reveal">CHAPTER 01</div>
+            <h2 class="slide-title reveal">
+                AI的演变，是<span class="accent">认知的跃迁</span>
+            </h2>
+            <p class="slide-subtitle reveal">演绎 → 归纳 → 理解</p>
+            
+            <div class="timeline reveal" style="margin-top: 2rem;">
+                <div class="timeline-item">
+                    <div class="mono" style="color: var(--accent-cyan); font-size: 0.8rem; margin-bottom: 0.5rem;">RULE-BASED</div>
+                    <div style="font-weight: 700;">规则导向</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">是不是</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="mono" style="color: var(--accent-blue); font-size: 0.8rem; margin-bottom: 0.5rem;">RECOMMENDATION</div>
+                    <div style="font-weight: 700;">基础推荐</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">像不像</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="mono" style="color: var(--accent-purple); font-size: 0.8rem; margin-bottom: 0.5rem;">ML/DL</div>
+                    <div style="font-weight: 700;">机器学习</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">更多特征</div>
+                </div>
+                <div class="timeline-item card card-glow">
+                    <div class="mono" style="color: var(--accent-magenta); font-size: 0.8rem; margin-bottom: 0.5rem;">⭐ LLM</div>
+                    <div style="font-weight: 700;">语义理解</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">现在的AI</div>
+                </div>
+            </div>
+            
+            <div class="grid-3 reveal" style="margin-top: 2rem;">
+                <div class="card" style="text-align: center;">
+                    <div style="color: var(--text-muted); font-size: 0.8rem;">逻辑世界</div>
+                    <div style="font-weight: 700;">非黑即白</div>
+                </div>
+                <div class="card" style="text-align: center;">
+                    <div style="color: var(--text-muted); font-size: 0.8rem;">统计世界</div>
+                    <div style="font-weight: 700;">概率可能性</div>
+                </div>
+                <div class="card card-glow" style="text-align: center;">
+                    <div style="color: var(--text-muted); font-size: 0.8rem;">语义世界</div>
+                    <div style="font-weight: 700; color: var(--accent-cyan);">理解语言</div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">02 / 26</div>
+    </section>
+
+    <!-- ===========================================
+         SLIDE 3: EVOLUTION DETAIL
+         =========================================== -->
+    <section class="slide" data-slide="3">
+        <div class="grid-bg"></div>
+        <div class="scanline"></div>
+        <div class="orb orb-magenta" style="width: 250px; height: 250px; bottom: 10%; left: 5%;"></div>
+        
+        <div class="slide-content">
+            <div class="tag reveal">EVOLUTION</div>
+            <h2 class="slide-title reveal" style="font-size: clamp(1.4rem, 4vw, 2.5rem);">
+                从规则到<span class="accent">语义理解</span>
+            </h2>
+            
+            <div class="grid-2" style="gap: 1.5rem; margin-top: 1rem;">
+                <div class="reveal">
+                    <div class="card" style="margin-bottom: 1rem;">
+                        <div class="mono" style="color: var(--accent-cyan); margin-bottom: 0.5rem;">01. 规则系统</div>
+                        <div class="body-text">if/else 条件判断</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+                            支付成功且未退货 = 订单成交
+                        </div>
+                    </div>
+                    <div class="card" style="margin-bottom: 1rem;">
+                        <div class="mono" style="color: var(--accent-blue); margin-bottom: 0.5rem;">02. 协同过滤</div>
+                        <div class="body-text">买过这个商品的人还喜欢什么？</div>
+                    </div>
+                    <div class="card">
+                        <div class="mono" style="color: var(--accent-purple); margin-bottom: 0.5rem;">03. 机器学习</div>
+                        <div class="body-text">浏览、性别、年龄、搜索、加购...</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+                            特征已经完全枚举不完了
+                        </div>
+                    </div>
+                </div>
+                <div class="reveal" style="transition-delay: 0.2s;">
+                    <div class="card card-glow" style="border-color: var(--accent-magenta);">
+                        <div class="mono" style="color: var(--accent-magenta); margin-bottom: 0.5rem;">04. 深度学习 → LLM</div>
+                        <div class="body-text">"这个被子摸起来像云朵一样柔软，但有点闷热。"</div>
+                        <div style="font-size: 0.8rem; color: var(--accent-cyan); margin-top: 1rem; padding: 0.75rem; background: rgba(0,255,204,0.05); border-radius: 4px;">
+                            → "喜欢触感，但对透气性不满意；整体情绪是'微妙的矛盾'"
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">03 / 26</div>
+    </section>
+
+    <!-- ===========================================
+         SLIDE 4: SEMANTIC UNDERSTANDING PROBLEM
+         =========================================== -->
+    <section class="slide" data-slide="4">
+        <div class="grid-bg"></div>
+        <div class="scanline"></div>
+        <div class="orb orb-cyan" style="width: 350px; height: 350px; top: -50px; right: -50px;"></div>
+        
+        <div class="slide-content">
+            <div class="tag reveal">THE PROBLEM</div>
+            <h2 class="slide-title reveal">
+                过去的语义理解<br><span class="accent">为什么解决不了？</span>
+            </h2>
+            <p class="slide-subtitle reveal">只能靠概率、顺序，还会忘记</p>
+            
+            <div class="grid-2" style="margin-top: 1.5rem;">
+                <div class="card reveal">
+                    <div class="mono" style="color: var(--accent-cyan); margin-bottom: 0.5rem;">n-gram</div>
+                    <div class="body-text">词频统计猜词</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem; font-family: var(--font-mono);">
+                        "我-爱" → "爱-你" → "你-吃" → "吃-苹果"
+                    </div>
+                </div>
+                <div class="card reveal" style="transition-delay: 0.1s;">
+                    <div class="mono" style="color: var(--accent-blue); margin-bottom: 0.5rem;">RNN</div>
+                    <div class="body-text">流水线阅读句子</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+                        "我昨天在深圳下班后去了广州的餐厅吃饭，因为..."
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card card-glow reveal" style="margin-top: 1.5rem; text-align: center;">
+                <div style="font-size: clamp(1rem, 2.5vw, 1.5rem); color: var(--accent-magenta);">
+                    猜得到 ✓ &nbsp;&nbsp; 看得见 ✓ &nbsp;&nbsp; <span style="color: var(--text-muted);">能理解 ✗</span>
+                </div>
+                <div class="body-text" style="margin-top: 1rem;">
+                    但...我们要求的是找万字长文的第一个词和8000字后的某个词的关联
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">04 / 26</div>
+    </section>
+
+    <!-- ===========================================
+         SLIDE 5: TRANSFORMER
+         =========================================== -->
+    <section class="slide" data-slide="5">
+        <div class="grid-bg"></div>
+        <div class="scanline"></div>
+        <div class="orb orb-blue" style="width: 300px; height: 300px; bottom: 10%; right: 5%;"></div>
+        
+        <div class="slide-content">
+            <div class="tag reveal">THE BREAKTHROUGH</div>
+            <h2 class="slide-title reveal">
+                Transformer和OpenAI<br><span class="accent">解决了什么事情？</span>
+            </h2>
+            
+            <div class="grid-2" style="margin-top: 1rem; gap: 1rem;">
+                <div class="card reveal">
+                    <div class="mono" style="color: var(--accent-cyan);">01. Transformer</div>
+                    <div class="body-text" style="margin-top: 0.5rem;">
+                        <strong>Self-Attention 自注意力机制</strong><br>
+                        模型看一个词时，可以"跳着看"句子中任意远的其他词
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+                        能够先看全文再理解每句话，还能知道词汇间的关系
+                    </div>
+                </div>
+                <div class="card reveal" style="transition-delay: 0.1s;">
+                    <div class="mono" style="color: var(--accent-blue);">02. Pre-training</div>
+                    <div class="body-text" style="margin-top: 0.5rem;">
+                        <strong>预训练</strong><br>
+                        从几千万 → 万亿级Tokens
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+                        从小型翻译数据 → 全人类的语言（网页、书籍、代码、论文）
+                    </div>
+                </div>
+                <div class="card reveal" style="transition-delay: 0.2s;">
+                    <div class="mono" style="color: var(--accent-purple);">03. SFT</div>
+                    <div class="body-text" style="margin-top: 0.5rem;">
+                        <strong>监督微调</strong><br>
+                        投喂「指令 → 答案」
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+                        让模型明白：输入什么，应该输出什么
+                    </div>
+                </div>
+                <div class="card card-glow reveal" style="transition-delay: 0.3s; border-color: var(--accent-magenta);">
+                    <div class="mono" style="color: var(--accent-magenta);">04. RLHF</div>
+                    <div class="body-text" style="margin-top: 0.5rem;">
+                        <strong>人类反馈强化学习</strong><br>
+                        不只是会做，而是"用人类喜欢的方式做"
+                    </div>
+                </div>
+            </div>
+            
+            <div class="reveal" style="margin-top: 1.5rem; text-align: center; font-size: clamp(1rem, 2vw, 1.3rem);">
+                理解了词汇的关系，建立了<span style="color: var(--accent-cyan);">"人和AI的指令交互范式"</span>
+            </div>
+        </div>
+        <div class="slide-number">05 / 26</div>
+    </section>
+
+    <!-- ===========================================
+         SLIDE 6: THREE PATHS
+         =========================================== -->
+    <section class="slide" data-slide="6">
+        <div class="grid-bg"></div>
+        <div class="scanline"></div>
+        <div class="orb orb-magenta" style="width: 400px; height: 400px; top: -150px; left: -150px;"></div>
+        
+        <div class="slide-content">
+            <div class="tag reveal">IMPLEMENTATION</div>
+            <h2 class="slide-title reveal">
+                使用AI的<span class="accent">三种路径</span>
+            </h2>
+            
+            <div class="grid-3" style="margin-top: 1.5rem; gap: 1rem;">
+                <div class="card reveal" style="text-align: center;">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">🔥</div>
+                    <div class="mono" style="color: var(--accent-cyan); font-size: 1.2rem; font-weight: 700;">训练</div>
+                    <div class="body-text" style="margin-top: 0.5rem; font-size: 0.8rem;">
+                        数据不能出库，要求完全可控，行业语言极度特殊
+                    </div>
+                    <div style="font-size: 0.7rem; color: var(--accent-magenta); margin-top: 0.5rem;">
+                        But: Kimi K2 ~460万美元
+                    </div>
+                </div>
+                <div class="card reveal" style="text-align: center; transition-delay: 0.1s;">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">⚙️</div>
+                    <div class="mono" style="color: var(--accent-blue); font-size: 1.2rem; font-weight: 700;">微调</div>
+                    <div class="body-text" style="margin-top: 0.5rem; font-size: 0.8rem;">
+                        永久改变风格、输出格式，要求极度稳定
+                    </div>
+                    <div style="font-size: 0.7rem; color: var(--accent-magenta); margin-top: 0.5rem;">
+                        But: GPT-3 需 3000亿 Tokens
+                    </div>
+                </div>
+                <div class="card card-glow reveal" style="text-align: center; transition-delay: 0.2s; border-color: var(--accent-magenta);">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">🚀</div>
+                    <div class="mono" style="color: var(--accent-magenta); font-size: 1.2rem; font-weight: 700;">应用 ⭐</div>
+                    <div class="body-text" style="margin-top: 0.5rem; font-size: 0.8rem;">
+                        成本最低，泛化最强，最重要的是：<span style="color: var(--accent-cyan);">卷不过一点</span>
+                    </div>
+                    <div style="font-size: 0.7rem; color: var(--accent-cyan); margin-top: 0.5rem;">
+                        Prompt + RAG + Tools + Workflow
+                    </div>
+                </div>
+            </div>
+            
+            <div class="reveal" style="margin-top: 2rem; text-align: center;">
+                <span class="badge">推荐路径</span>
+                <span style="margin-left: 1rem; color: var(--text-secondary);">拿来直接用</span>
+            </div>
+        </div>
+        <div class="slide-number">06 / 26</div>
+    </section>
+
+    <!-- ===========================================
+         SLIDE 7: FOUR PILLARS
+         =========================================== -->
+    <section class="slide" data-slide="7">
+        <div class="grid-bg"></div>
+        <div class="scanline"></div>
+        <div class="orb orb-cyan" style="width: 300px; height: 300px; bottom: -50px; right: 10%;"></div>
+        
+        <div class="slide-content">
+            <div class="tag reveal">FOUNDATION</div>
+            <h2 class="slide-title reveal">
+                落地AI的<span class="accent">4个基座</span>
+            </h2>
+            <p class="slide-subtitle reveal">知识 → 手脚 → 规则 → 流程</p>
+            
+            <div class="grid-2" style="margin-top: 1rem; gap: 1rem;">
+                <div class="card reveal">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <div style="width: 40px; height: 40px; background: rgba(0,255,204,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">📚</div>
+                        <div>
+                            <div class="mono" style="color: var(--accent-cyan); font-weight: 700;">01. RAG</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">检索增强生成</div>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.8rem; margin-top: 0.75rem; color: var(--text-secondary);">
+                        不知道私有知识、公域知识会过期、联网搜索有噪声
+                    </div>
+                </div>
+                <div class="card reveal" style="transition-delay: 0.1s;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <div style="width: 40px; height: 40px; background: rgba(0,204,255,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">🛠️</div>
+                        <div>
+                            <div class="mono" style="color: var(--accent-blue); font-weight: 700;">02. Tools</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">工具调用</div>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.8rem; margin-top: 0.75rem; color: var(--text-secondary);">
+                        有了Tools，chatbot才变成了agent<br>
+                        <span style="color: var(--accent-cyan);">以前它只会说话，现在它有了动手的能力</span>
+                    </div>
+                </div>
+                <div class="card reveal" style="transition-delay: 0.2s;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <div style="width: 40px; height: 40px; background: rgba(153,102,255,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">📝</div>
+                        <div>
+                            <div class="mono" style="color: var(--accent-purple); font-weight: 700;">03. Prompt</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">提示工程</div>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.8rem; margin-top: 0.75rem; color: var(--text-secondary);">
+                        产研是天然的Prompt专家<br>
+                        它是AI的cosplay说明
+                    </div>
+                </div>
+                <div class="card reveal" style="transition-delay: 0.3s;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <div style="width: 40px; height: 40px; background: rgba(255,0,255,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">⚡</div>
+                        <div>
+                            <div class="mono" style="color: var(--accent-magenta); font-weight: 700;">04. Workflow</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">工作流</div>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.8rem; margin-top: 0.75rem; color: var(--text-secondary);">
+                        很多时候不是AI工作流，而是<span style="color: var(--accent-cyan);">工作流里有一个节点是AI</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">07 / 26</div>
+    </section>
+</body>
+</html>
+
+    <!-- ===========================================
+         SLIDE 8: RAG WORKFLOW
+         =========================================== -->
+    <section class="slide" data-slide="8">
+        <div class="grid-bg"></div>
+        <div class="scanline"></div>
+        <div class="orb orb-cyan" style="width: 250px; height: 250px; top: 10%; left: 5%;"></div>
+        
+        <div class="slide-content">
+            <div class="tag reveal">RAG: RETRIEVAL AUGMENTED GENERATION</div>
+            <h2 class="slide-title reveal" style="font-size: clamp(1.4rem, 4vw, 2.5rem);">
+                RAG的<span class="accent">工作原理</span>
+            </h2>
+            
+            <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap;">
+                <div class="reveal" style="text-align: center;">
+                    <div style="width: 100px; height: 60px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem;">
+                        输入
+                    </div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem;">蛋炒饭怎么做？</div>
+                </div>
+                <div class="reveal" style="color: var(--accent-cyan);">→</div>
+                <div class="reveal" style="text-align: center; transition-delay: 0.1s;">
+                    <div style="width: 100px; height: 60px; background: rgba(0,255,204,0.1); border: 1px solid var(--accent-cyan); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: var(--accent-cyan);">
+                        R-检索
+                    </div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem;">查询知识库</div>
+                </div>
+                <div class="reveal" style="color: var(--accent-cyan); transition-delay: 0.1s;">→</div>
+                <div class="reveal" style="text-align: center; transition-delay: 0.2s;">
+                    <div style="width: 100px; height: 60px; background: rgba(0,204,255,0.1); border: 1px solid var(--accent-blue); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: var(--accent-blue);">
+                        A-增强
+                    </div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem;">上下文拼接</div>
+                </div>
+                <div class="reveal" style="color: var(--accent-blue); transition-delay: 0.2s;">→</div>
+                <div class="reveal" style="text-align: center; transition-delay: 0.3s;">
+                    <div style="width: 100px; height: 60px; background: rgba(255,0,255,0.1); border: 1px solid var(--accent-magenta); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: var(--accent-magenta);">
+                        G-生成
+                    </div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem;">LLM回答</div>
+                </div>
+                <div class="reveal" style="color: var(--accent-magenta); transition-delay: 0.3s;">→</div>
+                <div class="reveal" style="text-align: center; transition-delay: 0.4s;">
+                    <div style="width: 100px; height: 60px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem;">
+                        输出
+                    </div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem;">蛋炒饭的做法是...</div>
+                </div>
+            </div>
+            
+            <div class="card reveal" style="margin-top: 1.5rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+                <div class="mono" style="color: var(--accent-cyan); margin-bottom: 0.5rem;">提示词模板</div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary); font-family: var(--font-mono); line-height: 1.6;">
+                    请基于用户问题和参考资料回答问题<br><br>
+                    用户原始问题：「蛋炒饭怎么做」<br>
+                    参考资料：「X」
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">08 / 26</div>
+    </section>
+
+    <!-- ===========================================
+         SLIDE 9: RAG CODE
+         =========================================== -->
+    <section class="slide" data-slide="9">
+        <div class="grid-bg"></div>
+        <div class="scanline"></div>
+        
+        <div class="slide-content">
+            <div class="tag reveal">RAG IMPLEMENTATION</div>
+            <h2 class="slide-title reveal" style="font-size: clamp(1.3rem, 3.5vw, 2.2rem);">
+                RAG的<span class="accent">代码实现</span>
+            </h2>
+            
+            <div class="grid-2" style="gap: 1rem; margin-top: 1rem;">
+                <div class="reveal">
+                    <div class="mono" style="color: var(--accent-cyan); margin-bottom: 0.5rem; font-size: 0.85rem;">R-检索</div>
+                    <div class="code-block">
+<span class="keyword">def</span> <span class="function">search_knowledge_base</span>(
+    query: <span class="keyword">str</span>, 
+    vector_store,
+    fbaseids: List[<span class="keyword">int</span>],
+    topN: <span class="keyword">int</span> = <span class="string">20</span>
+) -> List[Dict]:
+    <span class="comment"># 将用户提问转化为向量</span>
+    <span class="comment"># 从向量数据库中查询信息</span>
+    logger.info(<span class="string">f"开始向量查询: {query}"</span>)
+    
+    <span class="keyword">if not</span> vector_store:
+        <span class="keyword">return</span> []
+    
+    <span class="comment"># 查询top N，然后使用LLM过滤</span>
+    results = vector_store.search(
+        query, 
+        fbaseids=fbaseids,
+        top_k=topN
+    )
+    <span class="keyword">return</span> filter_by_llm(results)</div>
+                </div>
+                <div class="reveal" style="transition-delay: 0.2s;">
+                    <div class="mono" style="color: var(--accent-magenta); margin-bottom: 0.5rem; font-size: 0.85rem;">A-增强 & G-生成</div>
+                    <div class="code-block">
+prompt = <span class="string">f"""
+基于以下参考信息回答用户问题。
+
+用户问题：{query}
+
+参考信息：
+{reference_text}
+{company_stats_text}
+{product_stats_text}
+{db_text}
+
+请生成准确、简洁的回答。
+"""</span>
+
+response = llm.generate(prompt)
+<span class="keyword">return</span> response</div>
+                </div>
+            </div>
+            
+            <div class="reveal" style="margin-top: 1rem; text-align: center;">
+                <span class="badge">核心逻辑</span>
+                <span style="margin-left: 1rem; font-size: 0.85rem; color: var(--text-secondary);">
+                    向量检索 → 上下文拼接 → LLM生成
+                </span>
+            </div>
+        </div>
+        <div class="slide-number">09 / 26</div>
+    </section>
+
+    <!-- ===========================================
+         SLIDE 10: TOOLS
+         =========================================== -->
+    <section class="slide" data-slide="10">
+        <div class="grid-bg"></div>
+        <div class="scanline"></div>
+        <div class="orb orb-blue" style="width: 350px; height: 350px; bottom: -100px; right: -100px;"></div>
+        
+        <div class="slide-content">
+            <div class="tag reveal">TOOLS: LLM'S HANDS</div>
+            <h2 class="slide-title reveal">
+                Tools是什么？
+            </h2>
+            <p class="slide-subtitle reveal">LLM 没有"功能"，只有"理解与生成"</p>
+            
+            <div class="card reveal" style="margin-top: 1rem;">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+                    <div style="text-align: center;">
+                        <div style="padding: 0.75rem 1.5rem; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 0.5rem;">
+                            "今天天气怎么样"
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">输入</div>
+                    </div>
+                    <div style="color: var(--accent-cyan);">↓</div>
+                    <div style="text-align: center;">
+                        <div style="padding: 0.75rem 1.5rem; background: rgba(0,255,204,0.1); border: 1px solid var(--accent-cyan); border-radius: 8px; margin-bottom: 0.5rem; color: var(--accent-cyan);">
+                            任务规划
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">提取意图</div>
+                    </div>
+                    <div style="color: var(--accent-cyan);">↓</div>
+                    <div style="text-align: center;">
+                        <div style="padding: 0.75rem 1.5rem; background: rgba(0,204,255,0.1); border: 1px solid var(--accent-blue); border-radius: 8px; margin-bottom: 0.5rem; color: var(--accent-blue);">
+                            天气查询工具
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">参数提取</div>
+                    </div>
+                    <div style="color: var(--accent-blue);">↓</div>
+                    <div style="text-align: center;">
+                        <div style="padding: 0.75rem 1.5rem; background: rgba(255,0,255,0.1); border: 1px solid var(--accent-magenta); border-radius: 8px; margin-bottom: 0.5rem; color: var(--accent-magenta);">
+                            晴朗，24度
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">工具输出</div>
+                    </div>
+                    <div style="color: var(--accent-magenta);">↓</div>
+                    <div style="text-align: center;">
+                        <div style="padding: 0.75rem 1.5rem; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 0.5rem;">
+                            合成回答
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">输出</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="reveal" style="margin-top: 1.5rem;">
+                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                    <span style="color: var(--accent-cyan);">冷知识：</span>这些也是Tools
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    <span class="badge">语音转文字</span>
+                    <span class="badge">联网搜索</span>
+                    <span class="badge">HTML预览</span>
+                    <span class="badge">Mermaid渲染</span>
+                    <span class="badge">图片生成</span>
+                    <span class="badge">工作流</span>
+                    <span class="badge">MCP/API</span>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">10 / 26</div>
+    </section>
+
+    <!-- ===========================================
+         SLIDE 11: TOOLS EXAMPLES
+         =========================================== -->
+    <section class="slide" data-slide="11">
+        <div class="grid-bg"></div>
+        <div class="scanline"></div>
+        
+        <div class="slide-content">
+            <div class="tag reveal">TOOLS IN ACTION</div>
+            <h2 class="slide-title reveal" style="font-size: clamp(1.4rem, 4vw, 2.5rem);">
+                Tools的<span class="accent">实际应用</span>
+            </h2>
+            
+            <div class="grid-3" style="margin-top: 1.5rem; gap: 1rem;">
+                <div class="card reveal" style="text-align: center;">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">🎨</div>
+                    <div style="font-weight: 700; margin-bottom: 0.5rem;">AI以前不会生图</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">现在怎么会了？</div>
+                    <div style="margin-top: 0.75rem; padding: 0.5rem; background: rgba(0,255,204,0.05); border-radius: 4px; font-size: 0.75rem; color: var(--accent-cyan);">
+                        → 图片生成工具
+                    </div>
+                </div>
+                <div class="card reveal" style="text-align: center; transition-delay: 0.1s;">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">🔍</div>
+                    <div style="font-weight: 700; margin-bottom: 0.5rem;">没打开联网搜索</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">为什么还搜索了？</div>
+                    <div style="margin-top: 0.75rem; padding: 0.5rem; background: rgba(0,204,255,0.05); border-radius: 4px; font-size: 0.75rem; color: var(--accent-blue);">
+                        → 自动触发工具
+                    </div>
+                </div>
+                <div class="card reveal" style="text-align: center; transition-delay: 0.2s;">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">🔗</div>
+                    <div style="font-weight: 700; margin-bottom: 0.5rem;">工作流 = API</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">外部能力的接入</div>
+                    <div style="margin-top: 0.75rem; padding: 0.5rem; background: rgba(255,0,255,0.05); border-radius: 4px; font-size: 0.75rem; color: var(--accent-magenta);">
+                        → MCP/Function Call
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card card-glow reveal" style="margin-top: 1.5rem; text-align: center;">
+                <div style="font-size: clamp(1rem, 2vw, 1.3rem);">
+                    有了Tools，<span style="color: var(--accent-cyan);">chatbot</span> 才变成了 <span style="color: var(--accent-magenta);">Agent</span>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">11 / 26</div>
+    </section>
+
+    <!-- ===========================================
+         SLIDE 12: PROMPT
+         =========================================== -->
+    <section class="slide" data-slide="12">
+        <div class="grid-bg"></div>
+        <div class="scanline"></div>
+        <div class="orb orb-purple" style="width: 300px; height: 300px; top: -50px; left: 20%;"></div>
+        
+        <div class="slide-content">
+            <div class="tag reveal">PROMPT ENGINEERING</div>
+            <h2 class="slide-title reveal">
+                产研是天然的<span class="accent">Prompt专家</span>
+            </h2>
+            
+            <div style="margin-top: 1.5rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div class="reveal" style="text-align: center; padding: 0.75rem; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                        <div style="font-weight: 700; color: var(--accent-cyan);">PRD</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">产品需求文档</div>
+                    </div>
+                    <div class="reveal" style="text-align: center; padding: 0.75rem; background: rgba(0,255,204,0.05); border: 1px solid var(--accent-cyan); border-radius: 8px;">
+                        <div style="font-weight: 700; color: var(--accent-cyan);">Prompt</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">提示词</div>
+                    </div>
+                </div>
+                
+                <div class="reveal" style="font-size: 0.85rem;">
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem;">
+                        <div style="padding: 0.5rem; background: rgba(255,255,255,0.03); border-radius: 4px;">
+                            <span style="color: var(--text-muted);">为什么？</span> <span style="color: var(--accent-cyan);">→</span> Background/Context
+                        </div>
+                        <div style="padding: 0.5rem; background: rgba(255,255,255,0.03); border-radius: 4px;">
+                            <span style="color: var(--text-muted);">做什么？</span> <span style="color: var(--accent-cyan);">→</span> Role/Objective
+                        </div>
+                        <div style="padding: 0.5rem; background: rgba(255,255,255,0.03); border-radius: 4px;">
+                            <span style="color: var(--text-muted);">做多少？</span> <span style="color: var(--accent-cyan);">→</span> Constrain
+                        </div>
+                        <div style="padding: 0.5rem; background: rgba(255,255,255,0.03); border-radius: 4px;">
+                            <span style="color: var(--text-muted);">怎么做？</span> <span style="color: var(--accent-cyan);">→</span> Steps/Task/Action
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card reveal" style="margin-top: 1.5rem; text-align: center;">
+                <div style="color: var(--accent-cyan); font-size: 0.9rem;">
+                    Prompt = AI的<span style="color: var(--accent-magenta);">Cosplay说明</span>
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+                    定义角色、语气、目标、任务、限制、输出格式
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">12 / 26</div>
+    </section>
+
+    <!-- ===========================================
+         SLIDE 13: PROMPT EXAMPLE
+         =========================================== -->
+    <section class="slide" data-slide="13">
+        <div class="grid-bg"></div>
+        <div class="scanline"></div>
+        
+        <div class="slide-content">
+            <div class="tag reveal">PROMPT EXAMPLE</div>
+            <h2 class="slide-title reveal" style="font-size: clamp(1.3rem, 3.5vw, 2.2rem);">
+                Prompt节选：<span class="accent">AI编程专家</span>
+            </h2>
+            
+            <div class="code-block reveal" style="margin-top: 1rem; max-height: min(55vh, 400px);">
+<span class="comment"># 角色</span>
+你是 Linus Torvalds，Linux 内核的创造者和首席架构师。
+你已经维护 Linux 内核超过30年，审核过数百万行代码。
+
+<span class="comment">## 沟通原则</span>
+### 基础交流规范
+- <span class="string">**语言要求**</span>：使用英语思考，但是始终最终用中文表达
+- <span class="string">**表达风格**</span>：直接、犀利、零废话
+- <span class="string">**技术优先**</span>：批评永远针对技术问题，不针对个人
+
+### Linus的三个问题
+在开始任何分析前，先问自己：
+<span class="string">1. "这是个真问题还是臆想出来的？"</span> - 拒绝过度设计
+<span class="string">2. "有更简单的方法吗？"</span> - 永远寻找最简方案  
+<span class="string">3. "会破坏什么吗？"</span> - 向后兼容是铁律
+
+<span class="comment">### 决策输出模式</span>
+经过思考后，输出必须包含：
+【核心判断】✅ 值得做 / ❌ 不值得做
+【关键洞察】数据结构 / 复杂度 / 风险点
+【Linus式方案】简化 → 消除特例 → 清晰实现</div>
+            
+            <div class="reveal" style="margin-top: 1rem; text-align: center;">
+                <span style="font-size: 0.8rem; color: var(--text-muted);">
+                    完整Prompt见：<span style="color: var(--accent-cyan);">doc.weixin.qq.com</span>
+                </span>
+            </div>
+        </div>
+        <div class="slide-number">13 / 26</div>
+    </section>
+
+    <!-- ===========================================
+         SLIDE 14: FROM PROMPT TO AGENT
+         =========================================== -->
+    <section class="slide" data-slide="14">
+        <div class="grid-bg"></div>
+        <div class="scanline"></div>
+        <div class="orb orb-cyan" style="width: 400px; height: 400px; bottom: -200px; right: -100px;"></div>
+        
+        <div class="slide-content">
+            <div class="tag reveal">EVOLUTION</div>
+            <h2 class="slide-title reveal">
+                逐层增强，直到<span class="accent">自主规划</span>
+            </h2>
+            <p class="slide-subtitle reveal">Prompt → RAG+Tools → Workflow → Agent</p>
+            
+            <div style="margin-top: 1.5rem;">
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div class="reveal" style="display: flex; align-items: center; gap: 1rem;">
+                        <div style="width: 80px; text-align: center;">
+                            <div class="badge">基础</div>
+                        </div>
+                        <div class="card" style="flex: 1;">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <span style="color: var(--accent-cyan); font-weight: 700;">Prompt</span>
+                                <span style="color: var(--text-muted);">→</span>
+                                <span>定义角色和任务</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="reveal" style="display: flex; align-items: center; gap: 1rem; transition-delay: 0.1s;">
+                        <div style="width: 80px; text-align: center;">
+                            <div class="badge">增强</div>
+                        </div>
+                        <div class="card" style="flex: 1;">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <span style="color: var(--accent-blue); font-weight: 700;">RAG + Tools</span>
+                                <span style="color: var(--text-muted);">→</span>
+                                <span>知识库 + 工具调用</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="reveal" style="display: flex; align-items: center; gap: 1rem; transition-delay: 0.2s;">
+                        <div style="width: 80px; text-align: center;">
+                            <div class="badge">流程</div>
+                        </div>
+                        <div class="card" style="flex: 1;">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <span style="color: var(--accent-purple); font-weight: 700;">Workflow</span>
+                                <span style="color: var(--text-muted);">→</span>
+                                <span style="color: var(--accent-cyan);">可控的固定流程</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="reveal" style="display: flex; align-items: center; gap: 1rem; transition-delay: 0.3s;">
+                        <div style="width: 80px; text-align: center;">
+                            <div class="badge" style="border-color: var(--accent-magenta); color: var(--accent-magenta);">智能</div>
+                        </div>
+                        <div class="card card-glow" style="flex: 1; border-color: var(--accent-magenta);">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <span style="color: var(--accent-magenta); font-weight: 700;">Agent</span>
+                                <span style="color: var(--text-muted);">→</span>
+                                <span style="color: var(--accent-magenta);">动态自主规划</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid-2 reveal" style="margin-top: 1.5rem; gap: 1rem;">
+                <div class="card" style="text-align: center;">
+                    <div style="color: var(--accent-purple); font-weight: 700;">Workflow = 可控</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">固定步骤，顺序执行</div>
+                </div>
+                <div class="card" style="text-align: center; border-color: var(--accent-magenta);">
+                    <div style="color: var(--accent-magenta); font-weight: 700;">Agent = 动态</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">自主决策，灵活应对</div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">14 / 26</div>
+    </section>
+
+    <!-- ===========================================
+         SLIDE 15: AGENT TYPES
+         =========================================== -->
+    <section class="slide" data-slide="15">
+        <div class="grid-bg"></div>
+        <div class="scanline"></div>
+        
+        <div class="slide-content">
+            <div class="tag reveal">AGENT TYPES</div>
+            <h2 class="slide-title reveal" style="font-size: clamp(1.4rem, 4vw, 2.5rem);">
+                让我们<span class="accent">更具体一点</span>
+            </h2>
+            
+            <div class="grid-3" style="margin-top: 1.5rem; gap: 1rem;">
+                <div class="card reveal" style="text-align: center;">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📋</div>
+                    <div style="font-weight: 700; color: var(--accent-cyan); margin-bottom: 0.5rem;">按顺序走</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">
+                        严格的线性流程<br>
+                        Step 1 → Step 2 → Step 3
+                    </div>
+                    <div style="margin-top: 0.75rem; padding: 0.4rem; background: rgba(0,255,204,0.1); border-radius: 4px; font-size: 0.7rem; color: var(--accent-cyan);">
+                        Workflow
+                    </div>
+                </div>
+                <div class="card reveal" style="text-align: center; transition-delay: 0.1s;">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔄</div>
+                    <div style="font-weight: 700; color: var(--accent-blue); margin-bottom: 0.5rem;">有限的随便走</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">
+                        条件分支 + 循环<br>
+                        有边界的灵活性
+                    </div>
+                    <div style="margin-top: 0.75rem; padding: 0.4rem; background: rgba(0,204,255,0.1); border-radius: 4px; font-size: 0.7rem; color: var(--accent-blue);">
+                        State Machine
+                    </div>
+                </div>
+                <div class="card reveal" style="text-align: center; transition-delay: 0.2s; border-color: var(--accent-magenta);">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🤖</div>
+                    <div style="font-weight: 700; color: var(--accent-magenta); margin-bottom: 0.5rem;">可能会乱走</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">
+                        自主规划 + 动态决策<br>
+                        LLM决定下一步
+                    </div>
+                    <div style="margin-top: 0.75rem; padding: 0.4rem; background: rgba(255,0,255,0.1); border-radius: 4px; font-size: 0.7rem; color: var(--accent-magenta);">
+                        Agent
+                    </div>
+                </div>
+            </div>
+            
+            <div class="reveal" style="margin-top: 1.5rem; text-align: center;">
+                <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                    选择的关键：<span style="color: var(--accent-cyan);">可控性</span> vs <span style="color: var(--accent-magenta);">灵活性</span>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">15 / 26</div>
+    </section>
+
+    <!-- ===========================================
+         SLIDE 16: AGENT DECISION MECHANISMS
+         =========================================== -->
+    <section class="slide" data-slide="16">
+        <div class="grid-bg"></div>
+        <div class="scanline"></div>
+        <div class="orb orb-magenta" style="width: 350px; height: 350px; top: -100px; left: -100px;"></div>
+        
+        <div class="slide-content">
+            <div class="tag reveal">AGENT BRAIN</div>
+            <h2 class="slide-title reveal" style="font-size: clamp(1.3rem, 3.5vw, 2.2rem);">
+                Agent的三种<span class="accent">决策机制</span>
+            </h2>
+            
+            <div style="margin-top: 1rem;">
+                <div class="card reveal" style="margin-bottom: 0.75rem;">
+                    <div style="display: flex; align-items: flex-start; gap: 1rem;">
+                        <div style="width: 50px; height: 50px; background: rgba(0,255,204,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">🚕</div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 700; color: var(--accent-cyan);">1. ReAct - 摸着石头过河</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                                边想边做：感知 → 思考 → 行动 → 观察 → 下一步
+                            </div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem;">
+                                像出租车司机：你告诉它终点，它边开边看路况、随时变道，但也可能越绕越远
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card reveal" style="margin-bottom: 0.75rem; transition-delay: 0.1s;">
+                    <div style="display: flex; align-items: flex-start; gap: 1rem;">
+                        <div style="width: 50px; height: 50px; background: rgba(0,204,255,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">🎯</div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 700; color: var(--accent-blue);">2. Plan-and-Execute - 谋定而后动</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                                先规划 → 再执行：Step1 → Step2 → Step3
+                            </div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem;">
+                                但计划错了，后面都错了。<span style="color: var(--accent-magenta);">选择比努力重要</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card card-glow reveal" style="border-color: var(--accent-magenta); transition-delay: 0.2s;">
+                    <div style="display: flex; align-items: flex-start; gap: 1rem;">
+                        <div style="width: 50px; height: 50px; background: rgba(255,0,255,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">🕸️</div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 700; color: var(--accent-magenta);">3. Graph - 有限度的自由</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                                强化版的Workflow：任意节点开始、重试、可以回退
+                            </div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem;">
+                                LLM不再规划了，只是判断和生成
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">16 / 26</div>
+    </section>
+
+    <!-- ===========================================
+         SLIDE 17: AI VS ENGINEERING
+         =========================================== -->
+    <section class="slide" data-slide="17">
+        <div class="grid-bg"></div>
+        <div class="scanline"></div>
+        
+        <div class="slide-content">
+            <div class="tag reveal">REALITY CHECK</div>
+            <h2 class="slide-title reveal" style="font-size: clamp(1.3rem, 3.5vw, 2.2rem);">
+                Agent是<span class="accent">万能</span>的吗？
+            </h2>
+            <p class="slide-subtitle reveal">钢铁侠也要穿上盔甲才会飞</p>
+            
+            <div style="margin-top: 1rem;">
+                <div class="grid-2" style="gap: 1rem;">
+                    <div class="card reveal" style="text-align: center; opacity: 0.6;">
+                        <div style="font-weight: 700; margin-bottom: 0.75rem;">理想</div>
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                            <span style="padding: 0.5rem 1rem; background: rgba(255,255,255,0.05); border-radius: 4px;">输入</span>
+                            <span style="color: var(--text-muted);">→</span>
+                            <span style="padding: 0.5rem 1rem; background: rgba(0,255,204,0.1); border: 1px solid var(--accent-cyan); border-radius: 4px; color: var(--accent-cyan);">AI</span>
+                            <span style="color: var(--text-muted);">→</span>
+                            <span style="padding: 0.5rem 1rem; background: rgba(255,255,255,0.05); border-radius: 4px;">输出</span>
+                        </div>
+                    </div>
+                    <div class="card card-glow reveal" style="text-align: center; transition-delay: 0.2s;">
+                        <div style="font-weight: 700; color: var(--accent-magenta); margin-bottom: 0.75rem;">现实 🙅‍</div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center;">
+                            <span style="padding: 0.3rem 0.6rem; background: rgba(255,255,255,0.05); border-radius: 4px; font-size: 0.75rem;">输入校验</span>
+                            <span style="padding: 0.3rem 0.6rem; background: rgba(255,255,255,0.05); border-radius: 4px; font-size: 0.75rem;">意图识别</span>
+                            <span style="padding: 0.3rem 0.6rem; background: rgba(255,255,255,0.05); border-radius: 4px; font-size: 0.75rem;">语义改写</span>
+                            <span style="padding: 0.3rem 0.6rem; background: rgba(0,255,204,0.1); border-radius: 4px; font-size: 0.75rem; color: var(--accent-cyan);">RAG召回</span>
+                            <span style="padding: 0.3rem 0.6rem; background: rgba(255,255,255,0.05); border-radius: 4px; font-size: 0.75rem;">Prompt拼接</span>
+                            <span style="padding: 0.3rem 0.6rem; background: rgba(255,0,255,0.1); border-radius: 4px; font-size: 0.75rem; color: var(--accent-magenta);">推理决策</span>
+                            <span style="padding: 0.3rem 0.6rem; background: rgba(255,255,255,0.05); border-radius: 4px; font-size: 0.75rem;">格式校验</span>
+                            <span style="padding: 0.3rem 0.6rem; background: rgba(255,255,255,0.05); border-radius: 4px; font-size: 0.75rem;">事实核查</span>
+                            <span style="padding: 0.3rem 0.6rem; background: rgba(255,255,255,0.05); border-radius: 4px; font-size: 0.75rem;">安全过滤</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="reveal" style="margin-top: 1.5rem; text-align: center;">
+                <span style="color: var(--accent-cyan);">输入/输出 + 前后处理</span> = 复杂的工程系统
+            </div>
+        </div>
+        <div class="slide-number">17 / 26</div>
+    </section>
+
+    <!-- ===========================================
+         SLIDE 18: AI VS ENGINEERING BREAKDOWN
+         =========================================== -->
+    <section class="slide" data-slide="18">
+        <div class="grid-bg"></div>
+        <div class="scanline"></div>
+        <div class="orb orb-cyan" style="width: 300px; height: 300px; bottom: -100px; right: 10%;"></div>
+        
+        <div class="slide-content">
+            <div class="tag reveal">BOUNDARY</div>
+            <h2 class="slide-title reveal" style="font-size: clamp(1.3rem, 3.5vw, 2.2rem);">
+                哪些是<span class="accent">AI</span>，哪些是<span style="color: var(--accent-blue);">工程</span>？
+            </h2>
+            
+            <div style="margin-top: 1rem;">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
+                    <div class="reveal" style="padding: 0.6rem; background: rgba(0,204,255,0.1); border: 1px solid var(--accent-blue); border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.75rem; color: var(--accent-blue);">输入校验</div>
+                        <div style="font-size: 0.65rem; color: var(--text-muted);">工程</div>
+                    </div>
+                    <div class="reveal" style="padding: 0.6rem; background: rgba(255,0,255,0.1); border: 1px solid var(--accent-magenta); border-radius: 8px; text-align: center; transition-delay: 0.05s;">
+                        <div style="font-size: 0.75rem; color: var(--accent-magenta);">意图识别</div>
+                        <div style="font-size: 0.65rem; color: var(--text-muted);">LLM || 工程</div>
+                    </div>
+                    <div class="reveal" style="padding: 0.6rem; background: rgba(255,0,255,0.1); border: 1px solid var(--accent-magenta); border-radius: 8px; text-align: center; transition-delay: 0.1s;">
+                        <div style="font-size: 0.75rem; color: var(--accent-magenta);">语义改写</div>
+                        <div style="font-size: 0.65rem; color: var(--text-muted);">LLM</div>
+                    </div>
+                    <div class="reveal" style="padding: 0.6rem; background: rgba(0,204,255,0.1); border: 1px solid var(--accent-blue); border-radius: 8px; text-align: center; transition-delay: 0.15s;">
+                        <div style="font-size: 0.75rem; color: var(--accent-blue);">RAG召回</div>
+                        <div style="font-size: 0.65rem; color: var(--text-muted);">工程</div>
+                    </div>
+                    <div class="reveal" style="padding: 0.6rem; background: rgba(0,204,255,0.1); border: 1px solid var(--accent-blue); border-radius: 8px; text-align: center; transition-delay: 0.2s;">
+                        <div style="font-size: 0.75rem; color: var(--accent-blue);">Prompt拼接</div>
+                        <div style="font-size: 0.65rem; color: var(--text-muted);">工程</div>
+                    </div>
+                    <div class="reveal" style="padding: 0.6rem; background: rgba(255,0,255,0.1); border: 1px solid var(--accent-magenta); border-radius: 8px; text-align: center; transition-delay: 0.25s;">
+                        <div style="font-size: 0.75rem; color: var(--accent-magenta);">推理决策</div>
+                        <div style="font-size: 0.65rem; color: var(--text-muted);">LLM</div>
+                    </div>
+                    <div class="reveal" style="padding: 0.6rem; background: rgba(0,204,255,0.1); border: 1px solid var(--accent-blue); border-radius: 8px; text-align: center; transition-delay: 0.3s;">
+                        <div style="font-size: 0.75rem; color: var(--accent-blue);">格式校验</div>
+                        <div style="font-size: 0.65rem; color: var(--text-muted);">工程</div>
+                    </div>
+                    <div class="reveal" style="padding: 0.6rem; background: rgba(255,0,255,0.1); border: 1px solid var(--accent-magenta); border-radius: 8px; text-align: center; transition-delay: 0.35s;">
+                        <div style="font-size: 0.75rem; color: var(--accent-magenta);">事实核查</div>
+                        <div style="font-size: 0.65rem; color: var(--text-muted);">LLM & 工程</div>
+                    </div>
+                    <div class="reveal" style="padding: 0.6rem; background: rgba(0,204,255,0.1); border: 1px solid var(--accent-blue); border-radius: 8px; text-align: center; transition-delay: 0.4s;">
+                        <div style="font-size: 0.75rem; color: var(--accent-blue);">安全过滤</div>
+                        <div style="font-size: 0.65rem; color: var(--text-muted);">工程</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="reveal" style="margin-top: 1rem; text-align: center;">
+                <span style="color: var(--accent-magenta);">紫色</span> = AI能力 &nbsp;&nbsp; <span style="color: var(--accent-blue);">蓝色</span> = 工程能力
+            </div>
+        </div>
+        <div class="slide-number">18 / 26</div>
+    </section>
+
+    <!-- ===========================================
+         SLIDE 19: ENGINEERING EXAMPLES
+         =========================================== -->
+    <section class="slide" data-slide="19">
+        <div class="grid-bg"></div>
+        <div class="scanline"></div>
+        
+        <div class="slide-content">
+            <div class="tag reveal">ENGINEERING</div>
+            <h2 class="slide-title reveal" style="font-size: clamp(1.3rem, 3.5vw, 2.2rem);">
+                这些是<span style="color: var(--accent-blue);">工程</span>做的
+            </h2>
+            
+            <div class="grid-3" style="margin-top: 1.5rem; gap: 1rem;">
+                <div class="card reveal" style="text-align: center;">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.75rem;">📝</div>
+                    <div style="font-weight: 700; color: var(--accent-blue); margin-bottom: 0.5rem;">Prompt拼接</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">
+                        动态组装Prompt<br>
+                        模板管理 + 变量注入
+                    </div>
+                </div>
+                <div class="card reveal" style="text-align: center; transition-delay: 0.1s;">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.75rem;">🗄️</div>
+                    <div style="font-weight: 700; color: var(--accent-blue); margin-bottom: 0.5rem;">数据库查询</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">
+                        SQL生成 + 执行<br>
+                        结果格式化
+                    </div>
+                </div>
+                <div class="card reveal" style="text-align: center; transition-delay: 0.2s;">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.75rem;">💬</div>
+                    <div style="font-weight: 700; color: var(--accent-blue); margin-bottom: 0.5rem;">会话管理</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">
+                        上下文维护<br>
+                        多轮对话状态
+                    </div>
+                </div>
+            </div>
+            
+            <div class="reveal" style="margin-top: 1.5rem; text-align: center;">
+                <div class="badge">核心原则</div>
+                <div style="margin-top: 0.75rem; font-size: 0.9rem; color: var(--text-secondary);">
+                    LLM 没有"功能"，只有"理解与生成"<br>
+                    <span style="color: var(--accent-cyan);">所有"功能"都是工程封装出来的</span>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">19 / 26</div>
+    </section>
+
+    <!-- ===========================================
+         SLIDE 20: AI SOLUTIONS
+         =========================================== -->
+    <section class="slide" data-slide="20">
+        <div class="grid-bg"></div>
+        <div class="scanline"></div>
+        <div class="orb orb-cyan" style="width: 400px; height: 400px; top: -150px; right: -100px;"></div>
+        
+        <div class="slide-content">
+            <div class="tag reveal">VALUE</div>
+            <h2 class="slide-title reveal" style="font-size: clamp(1.3rem, 3.5vw, 2.2rem);">
+                AI到底帮我们<span class="accent">解决了</span>什么问题？
+            </h2>
+            <p class="slide-subtitle reveal">这么麻烦还要做那些agent什么的吗？</p>
+            
+            <div class="grid-2" style="margin-top: 1rem; gap: 1rem;">
+                <div class="card reveal">
+                    <div style="font-weight: 700; color: var(--accent-cyan); margin-bottom: 0.5rem;">🎨 图像生成</div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                        Loveart → 即梦4.0 + Agent<br>
+                        <span style="color: var(--accent-magenta);">简单的提示词</span> vs <span style="color: var(--accent-cyan);">Agent工作流</span>
+                    </div>
+                    <div style="margin-top: 0.5rem; padding: 0.5rem; background: rgba(0,255,204,0.05); border-radius: 4px; font-size: 0.7rem;">
+                        从"描述图片"到"描述需求"的转变
+                    </div>
+                </div>
+                <div class="card reveal" style="transition-delay: 0.15s;">
+                    <div style="font-weight: 700; color: var(--accent-blue); margin-bottom: 0.5rem;">🎙️ 语音内容</div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                        NotebookLM + Nanobanana Pro<br>
+                        多Agent协作生成播客
+                    </div>
+                    <div style="margin-top: 0.5rem; padding: 0.5rem; background: rgba(0,204,255,0.05); border-radius: 4px; font-size: 0.7rem;">
+                        从文档到对话式音频的自动转换
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card card-glow reveal" style="margin-top: 1rem; text-align: center;">
+                <div style="font-size: clamp(0.9rem, 2vw, 1.1rem); color: var(--text-secondary);">
+                    PRD、用例确实比以前更难写了...<br>
+                    但 <span style="color: var(--accent-cyan);">AI解决的是以前完全做不到的事情</span>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">20 / 26</div>
+    </section>
+
+    <!-- ===========================================
+         SLIDE 21: AI CAPABILITIES
+         =========================================== -->
+    <section class="slide" data-slide="21">
+        <div class="grid-bg"></div>
+        <div class="scanline"></div>
+        
+        <div class="slide-content">
+            <div class="tag reveal">CAPABILITIES</div>
+            <h2 class="slide-title reveal" style="font-size: clamp(1.3rem, 3.5vw, 2.2rem);">
+                AI帮我们<span class="accent">做什么</span>？
+            </h2>
+            
+            <div style="margin-top: 1rem;">
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem;">
+                    <div class="reveal" style="padding: 0.6rem; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                        <div style="color: var(--text-muted); font-size: 0.75rem;">意图</div>
+                        <div style="font-size: 0.8rem;"><span style="color: var(--text-muted);">人工</span> → <span style="color: var(--accent-cyan);">AI</span></div>
+                    </div>
+                    <div class="reveal" style="padding: 0.6rem; background: rgba(255,255,255,0.03); border-radius: 8px; transition-delay: 0.05s;">
+                        <div style="color: var(--text-muted); font-size: 0.75rem;">规则</div>
+                        <div style="font-size: 0.8rem;"><span style="color: var(--text-muted);">if-else</span> → <span style="color: var(--accent-cyan);">模糊推理</span></div>
+                    </div>
+                    <div class="reveal" style="padding: 0.6rem; background: rgba(255,255,255,0.03); border-radius: 8px; transition-delay: 0.1s;">
+                        <div style="color: var(--text-muted); font-size: 0.75rem;">结构</div>
+                        <div style="font-size: 0.8rem;"><span style="color: var(--text-muted);">schema</span> → <span style="color: var(--accent-cyan);">非结构化理解</span></div>
+                    </div>
+                    <div class="reveal" style="padding: 0.6rem; background: rgba(255,255,255,0.03); border-radius: 8px; transition-delay: 0.15s;">
+                        <div style="color: var(--text-muted); font-size: 0.75rem;">语义</div>
+                        <div style="font-size: 0.8rem;"><span style="color: var(--text-muted);">关键词</span> → <span style="color: var(--accent-cyan);">长文本语义理解</span></div>
+                    </div>
+                    <div class="reveal" style="padding: 0.6rem; background: rgba(255,255,255,0.03); border-radius: 8px; transition-delay: 0.2s;">
+                        <div style="color: var(--text-muted); font-size: 0.75rem;">生成</div>
+                        <div style="font-size: 0.8rem;"><span style="color: var(--text-muted);">人工</span> → <span style="color: var(--accent-magenta);">Gen AI</span></div>
+                    </div>
+                    <div class="reveal" style="padding: 0.6rem; background: rgba(255,255,255,0.03); border-radius: 8px; transition-delay: 0.25s;">
+                        <div style="color: var(--text-muted); font-size: 0.75rem;">任务</div>
+                        <div style="font-size: 0.8rem;"><span style="color: var(--text-muted);">人工</span> → <span style="color: var(--accent-blue);">Function Call</span></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="reveal" style="margin-top: 1rem;">
+                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">应用场景对比：</div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
+                    <div style="padding: 0.5rem; background: rgba(0,255,204,0.05); border-radius: 4px; text-align: center;">
+                        <div style="font-size: 0.75rem; color: var(--accent-cyan);">客服</div>
+                        <div style="font-size: 0.65rem; color: var(--text-muted);">语义理解，不再是人工智障</div>
+                    </div>
+                    <div style="padding: 0.5rem; background: rgba(0,204,255,0.05); border-radius: 4px; text-align: center;">
+                        <div style="font-size: 0.75rem; color: var(--accent-blue);">研发</div>
+                        <div style="font-size: 0.65rem; color: var(--text-muted);">AI做泛化，研发聚焦复杂逻辑</div>
+                    </div>
+                    <div style="padding: 0.5rem; background: rgba(255,0,255,0.05); border-radius: 4px; text-align: center;">
+                        <div style="font-size: 0.75rem; color: var(--accent-magenta);">销售</div>
+                        <div style="font-size: 0.65rem; color: var(--text-muted);">知识库+提示词 = 金牌销售</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">21 / 26</div>
+    </section>
+
+    <!-- ===========================================
+         SLIDE 22: BEFORE VS AFTER
+         =========================================== -->
+    <section class="slide" data-slide="22">
+        <div class="grid-bg"></div>
+        <div class="scanline"></div>
+        <div class="orb orb-magenta" style="width: 300px; height: 300px; bottom: -50px; left: 10%;"></div>
+        
+        <div class="slide-content">
+            <div class="tag reveal">TRANSFORMATION</div>
+            <h2 class="slide-title reveal" style="font-size: clamp(1.3rem, 3.5vw, 2.2rem);">
+                <span style="color: var(--text-muted);">以前</span> vs <span class="accent">现在</span>
+            </h2>
+            
+            <div style="margin-top: 1rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.8rem;">
+                    <div class="reveal" style="padding: 0.5rem; background: rgba(255,255,255,0.03); border-radius: 8px; text-align: center;">
+                        <div style="color: var(--text-muted);">内容</div>
+                        <div style="font-size: 0.7rem;">靠人工撰写<br>复杂SQL提需求</div>
+                    </div>
+                    <div class="reveal" style="padding: 0.5rem; background: rgba(0,255,204,0.1); border: 1px solid var(--accent-cyan); border-radius: 8px; text-align: center; transition-delay: 0.1s;">
+                        <div style="color: var(--accent-cyan);">内容</div>
+                        <div style="font-size: 0.7rem;">提示词大法好</div>
+                    </div>
+                    <div class="reveal" style="padding: 0.5rem; background: rgba(255,255,255,0.03); border-radius: 8px; text-align: center; transition-delay: 0.15s;">
+                        <div style="color: var(--text-muted);">客服</div>
+                        <div style="font-size: 0.7rem;">关键词、规则树<br>只会"查词匹配"</div>
+                    </div>
+                    <div class="reveal" style="padding: 0.5rem; background: rgba(0,255,204,0.1); border: 1px solid var(--accent-cyan); border-radius: 8px; text-align: center; transition-delay: 0.2s;">
+                        <div style="color: var(--accent-cyan);">客服</div>
+                        <div style="font-size: 0.7rem;">语义会理解<br>图片能分析</div>
+                    </div>
+                    <div class="reveal" style="padding: 0.5rem; background: rgba(255,255,255,0.03); border-radius: 8px; text-align: center; transition-delay: 0.25s;">
+                        <div style="color: var(--text-muted);">研发</div>
+                        <div style="font-size: 0.7rem;">手写逻辑<br>大量编码</div>
+                    </div>
+                    <div class="reveal" style="padding: 0.5rem; background: rgba(0,255,204,0.1); border: 1px solid var(--accent-cyan); border-radius: 8px; text-align: center; transition-delay: 0.3s;">
+                        <div style="color: var(--accent-cyan);">研发</div>
+                        <div style="font-size: 0.7rem;">AI做泛化推理<br>聚焦复杂逻辑</div>
+                    </div>
+                    <div class="reveal" style="padding: 0.5rem; background: rgba(255,255,255,0.03); border-radius: 8px; text-align: center; transition-delay: 0.35s;">
+                        <div style="color: var(--text-muted);">销售</div>
+                        <div style="font-size: 0.7rem;">纯靠经验<br>忙不过来</div>
+                    </div>
+                    <div class="reveal" style="padding: 0.5rem; background: rgba(0,255,204,0.1); border: 1px solid var(--accent-cyan); border-radius: 8px; text-align: center; transition-delay: 0.4s;">
+                        <div style="color: var(--accent-cyan);">销售</div>
+                        <div style="font-size: 0.7rem;">知识库+提示词<br>又是一个金牌销售</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">22 / 26</div>
+    </section>
+
+    <!-- ===========================================
+         SLIDE 23: 4 QUESTIONS
+         =========================================== -->
+    <section class="slide" data-slide="23">
+        <div class="grid-bg"></div>
+        <div class="scanline"></div>
+        
+        <div class="slide-content">
+            <div class="tag reveal">PRODUCT THINKING</div>
+            <h2 class="slide-title reveal">
+                AI产品的<span class="accent">灵魂4问</span>
+            </h2>
+            <p class="slide-subtitle reveal">边界 → 选型 → 依赖 → 标准</p>
+            
+            <div class="grid-2" style="margin-top: 1rem; gap: 1rem;">
+                <div class="card reveal">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                        <div style="width: 36px; height: 36px; background: rgba(0,255,204,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--accent-cyan);">1</div>
+                        <div style="font-weight: 700;">边界</div>
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                        代码实现 vs AI实现？<br>
+                        <span style="color: var(--accent-cyan);">绝对精准用代码，接收模糊用AI</span>
+                    </div>
+                </div>
+                <div class="card reveal" style="transition-delay: 0.1s;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                        <div style="width: 36px; height: 36px; background: rgba(0,204,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--accent-blue);">2</div>
+                        <div style="font-weight: 700;">选型</div>
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                        Workflow vs Agent？<br>
+                        <span style="color: var(--accent-blue);">严格顺序用Workflow，无法枚举用Agent</span>
+                    </div>
+                </div>
+                <div class="card reveal" style="transition-delay: 0.2s;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                        <div style="width: 36px; height: 36px; background: rgba(153,102,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--accent-purple);">3</div>
+                        <div style="font-weight: 700;">依赖</div>
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                        LLM vs 工具&知识库？<br>
+                        <span style="color: var(--accent-purple);">用什么模型、对什么有依赖？</span>
+                    </div>
+                </div>
+                <div class="card reveal" style="transition-delay: 0.3s;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                        <div style="width: 36px; height: 36px; background: rgba(255,0,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--accent-magenta);">4</div>
+                        <div style="font-weight: 700;">标准</div>
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                        能用 vs 好用？<br>
+                        <span style="color: var(--accent-magenta);">MVP是什么？量化标准是什么？</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">23 / 26</div>
+    </section>
+
+    <!-- ===========================================
+         SLIDE 24: TESTING PROCESS
+         =========================================== -->
+    <section class="slide" data-slide="24">
+        <div class="grid-bg"></div>
+        <div class="scanline"></div>
+        <div class="orb orb-cyan" style="width: 350px; height: 350px; top: -100px; right: -100px;"></div>
+        
+        <div class="slide-content">
+            <div class="tag reveal">TESTING</div>
+            <h2 class="slide-title reveal" style="font-size: clamp(1.3rem, 3.5vw, 2.2rem);">
+                AI产品要<span class="accent">测试什么</span>？
+            </h2>
+            <p class="slide-subtitle reveal">流程 → 分析 → 指标 → 用例</p>
+            
+            <div style="margin-top: 1rem;">
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <div class="reveal" style="display: flex; align-items: center; gap: 1rem;">
+                        <div style="padding: 0.4rem 0.8rem; background: rgba(255,255,255,0.05); border-radius: 4px; font-size: 0.8rem;">接收PRD</div>
+                        <span style="color: var(--text-muted);">→</span>
+                        <div style="padding: 0.4rem 0.8rem; background: rgba(0,255,204,0.1); border: 1px solid var(--accent-cyan); border-radius: 4px; font-size: 0.8rem; color: var(--accent-cyan);">看流程</div>
+                        <span style="color: var(--text-muted);">→</span>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary);">有没有AI节点？</div>
+                    </div>
+                    <div class="reveal" style="display: flex; align-items: center; gap: 1rem; transition-delay: 0.1s;">
+                        <div style="padding: 0.4rem 0.8rem; background: rgba(255,0,255,0.1); border: 1px solid var(--accent-magenta); border-radius: 4px; font-size: 0.8rem; color: var(--accent-magenta);">Agent任务分析</div>
+                        <span style="color: var(--text-muted);">→</span>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary);">任务数量 | 任务类型 | 节点依赖</div>
+                    </div>
+                    <div class="reveal" style="display: flex; align-items: center; gap: 1rem; transition-delay: 0.2s;">
+                        <div style="padding: 0.4rem 0.8rem; background: rgba(0,204,255,0.1); border: 1px solid var(--accent-blue); border-radius: 4px; font-size: 0.8rem; color: var(--accent-blue);">类别指标设计</div>
+                        <span style="color: var(--text-muted);">→</span>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary);">判别-准不准 | 提取-全不全 | 生成-好不好</div>
+                    </div>
+                    <div class="reveal" style="display: flex; align-items: center; gap: 1rem; transition-delay: 0.3s;">
+                        <div style="padding: 0.4rem 0.8rem; background: rgba(153,102,255,0.1); border: 1px solid var(--accent-purple); border-radius: 4px; font-size: 0.8rem; color: var(--accent-purple);">用例设计</div>
+                        <span style="color: var(--text-muted);">→</span>
+                        <div style="padding: 0.4rem 0.8rem; background: rgba(0,255,204,0.1); border: 1px solid var(--accent-cyan); border-radius: 4px; font-size: 0.8rem; color: var(--accent-cyan);">节点测试</div>
+                        <span style="color: var(--text-muted);">→</span>
+                        <div style="padding: 0.4rem 0.8rem; background: rgba(255,0,255,0.1); border: 1px solid var(--accent-magenta); border-radius: 4px; font-size: 0.8rem; color: var(--accent-magenta);">端到端</div>
+                        <span style="color: var(--text-muted);">→</span>
+                        <div style="padding: 0.4rem 0.8rem; background: rgba(0,255,100,0.1); border: 1px solid #00ff64; border-radius: 4px; font-size: 0.8rem; color: #00ff64;">发布</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">24 / 26</div>
+    </section>
+
+    <!-- ===========================================
+         SLIDE 25: TESTING METRICS
+         =========================================== -->
+    <section class="slide" data-slide="25">
+        <div class="grid-bg"></div>
+        <div class="scanline"></div>
+        
+        <div class="slide-content">
+            <div class="tag reveal">TESTING METRICS</div>
+            <h2 class="slide-title reveal" style="font-size: clamp(1.3rem, 3.5vw, 2.2rem);">
+                判定<span class="accent">错误原因</span>
+            </h2>
+            <p class="slide-subtitle reveal">功能没实现？提示词问题？工程能力问题？</p>
+            
+            <div class="grid-2" style="margin-top: 1rem; gap: 1rem;">
+                <div class="card reveal">
+                    <div style="font-weight: 700; color: var(--accent-cyan); margin-bottom: 0.5rem;">1. 工程地基</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary); line-height: 1.6;">
+                        <strong style="color: var(--accent-blue);">输入安检</strong>：敏感词、SQL注入、Prompt攻击<br>
+                        <span style="color: var(--text-muted);">标准：100%拦截</span><br><br>
+                        <strong style="color: var(--accent-blue);">格式解析</strong>：JSON容错能力<br>
+                        <span style="color: var(--text-muted);">标准：Crash率 0%</span>
+                    </div>
+                </div>
+                <div class="card reveal" style="transition-delay: 0.1s;">
+                    <div style="font-weight: 700; color: var(--accent-blue); margin-bottom: 0.5rem;">2. 检索能力</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary); line-height: 1.6;">
+                        <strong style="color: var(--accent-blue);">召回率</strong>：Recall@k ≥ 85%<br>
+                        <span style="color: var(--text-muted);">行业优秀水平</span><br><br>
+                        <strong style="color: var(--accent-blue);">切片质量</strong>：上下文完整性
+                    </div>
+                </div>
+                <div class="card reveal" style="transition-delay: 0.2s;">
+                    <div style="font-weight: 700; color: var(--accent-purple); margin-bottom: 0.5rem;">3. 测LLM</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary); line-height: 1.6;">
+                        <strong style="color: var(--accent-purple);">判别类</strong>：准确率 ≥ 90%<br>
+                        <strong style="color: var(--accent-purple);">提取类</strong>：字段匹配率 ≥ 95%<br>
+                        <strong style="color: var(--accent-purple);">生成类</strong>：评分 ≥ 4.0/5
+                    </div>
+                </div>
+                <div class="card reveal" style="transition-delay: 0.3s;">
+                    <div style="font-weight: 700; color: var(--accent-magenta); margin-bottom: 0.5rem;">4. 稳定性</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary); line-height: 1.6;">
+                        <strong style="color: var(--accent-magenta);">一致性</strong>：T=0，连问10次<br>
+                        <span style="color: var(--text-muted);">核心含义必须一致</span><br><br>
+                        <strong style="color: var(--accent-magenta);">回归测试</strong>：Golden Dataset<br>
+                        <span style="color: var(--text-muted);">通过率不下降</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">25 / 26</div>
+    </section>
+
+    <!-- ===========================================
+         SLIDE 26: THANKS
+         =========================================== -->
+    <section class="slide" data-slide="26">
+        <div class="grid-bg"></div>
+        <div class="scanline"></div>
+        <div class="orb orb-cyan" style="width: 500px; height: 500px; top: -200px; left: -200px;"></div>
+        <div class="orb orb-magenta" style="width: 400px; height: 400px; bottom: -150px; right: -150px;"></div>
+        
+        <div class="slide-content" style="text-align: center; align-items: center;">
+            <div class="tag reveal">THE END</div>
+            <h1 class="slide-title reveal" style="font-size: clamp(3rem, 8vw, 6rem);">
+                <span class="accent">Thanks</span>
+            </h1>
+            <p class="slide-subtitle reveal" style="margin-top: 2rem;">
+                AI产品落地解构<br>
+                演变 · 解构 · 工程化
+            </p>
+            <button class="reveal qrcode-btn" id="qrcodeBtn" style="margin-top: 3rem;">
+                > @歪斯Wise
+            </button>
+            <div class="reveal" style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-muted);">
+                从认知跃迁到工程实践
+            </div>
+        </div>
+        <div class="slide-number">26 / 26</div>
+    </section>
+
+    <!-- ===========================================
+         JAVASCRIPT
+         =========================================== -->
+    <script>
+        /* ===========================================
+           SLIDE PRESENTATION CONTROLLER
+           =========================================== */
+        class SlidePresentation {
+            constructor() {
+                this.slides = document.querySelectorAll('.slide');
+                this.currentSlide = 0;
+                this.totalSlides = this.slides.length;
+                this.progressBar = document.getElementById('progressBar');
+                this.navDots = document.getElementById('navDots');
+                this.isScrolling = false;
+                this.scrollTimeout = null;
+                
+                this.init();
+            }
+
+            init() {
+                this.createNavDots();
+                this.bindEvents();
+                this.updateProgress();
+                this.setupIntersectionObserver();
+                
+                // Initial visibility check
+                this.slides[0].classList.add('visible');
+            }
+
+            createNavDots() {
+                this.slides.forEach((_, index) => {
+                    const dot = document.createElement('div');
+                    dot.className = 'nav-dot' + (index === 0 ? ' active' : '');
+                    dot.addEventListener('click', () => this.goToSlide(index));
+                    this.navDots.appendChild(dot);
+                });
+            }
+
+            bindEvents() {
+                // Keyboard navigation
+                document.addEventListener('keydown', (e) => {
+                    switch(e.key) {
+                        case 'ArrowDown':
+                        case 'ArrowRight':
+                        case ' ':
+                        case 'PageDown':
+                            e.preventDefault();
+                            this.nextSlide();
+                            break;
+                        case 'ArrowUp':
+                        case 'ArrowLeft':
+                        case 'PageUp':
+                            e.preventDefault();
+                            this.prevSlide();
+                            break;
+                        case 'Home':
+                            e.preventDefault();
+                            this.goToSlide(0);
+                            break;
+                        case 'End':
+                            e.preventDefault();
+                            this.goToSlide(this.totalSlides - 1);
+                            break;
+                    }
+                });
+
+                // Touch/Swipe support
+                let touchStartY = 0;
+                let touchEndY = 0;
+
+                document.addEventListener('touchstart', (e) => {
+                    touchStartY = e.changedTouches[0].screenY;
+                }, { passive: true });
+
+                document.addEventListener('touchend', (e) => {
+                    touchEndY = e.changedTouches[0].screenY;
+                    this.handleSwipe(touchStartY, touchEndY);
+                }, { passive: true });
+
+                // Mouse wheel
+                let wheelTimeout;
+                document.addEventListener('wheel', (e) => {
+                    if (wheelTimeout) return;
+                    
+                    wheelTimeout = setTimeout(() => {
+                        wheelTimeout = null;
+                    }, 800);
+
+                    if (e.deltaY > 0) {
+                        this.nextSlide();
+                    } else {
+                        this.prevSlide();
+                    }
+                }, { passive: true });
+            }
+
+            handleSwipe(startY, endY) {
+                const threshold = 50;
+                const diff = startY - endY;
+
+                if (Math.abs(diff) > threshold) {
+                    if (diff > 0) {
+                        this.nextSlide();
+                    } else {
+                        this.prevSlide();
+                    }
+                }
+            }
+
+            setupIntersectionObserver() {
+                const options = {
+                    root: null,
+                    rootMargin: '0px',
+                    threshold: 0.5
+                };
+
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('visible');
+                            const slideNum = parseInt(entry.target.dataset.slide);
+                            this.currentSlide = slideNum - 1;
+                            this.updateNavDots();
+                            this.updateProgress();
+                        }
+                    });
+                }, options);
+
+                this.slides.forEach(slide => observer.observe(slide));
+            }
+
+            goToSlide(index) {
+                if (index < 0 || index >= this.totalSlides) return;
+                
+                this.slides[index].scrollIntoView({ behavior: 'smooth' });
+                this.currentSlide = index;
+                this.updateNavDots();
+                this.updateProgress();
+            }
+
+            nextSlide() {
+                if (this.currentSlide < this.totalSlides - 1) {
+                    this.goToSlide(this.currentSlide + 1);
+                }
+            }
+
+            prevSlide() {
+                if (this.currentSlide > 0) {
+                    this.goToSlide(this.currentSlide - 1);
+                }
+            }
+
+            updateNavDots() {
+                const dots = this.navDots.querySelectorAll('.nav-dot');
+                dots.forEach((dot, index) => {
+                    dot.classList.toggle('active', index === this.currentSlide);
+                });
+            }
+
+            updateProgress() {
+                const progress = ((this.currentSlide + 1) / this.totalSlides) * 100;
+                this.progressBar.style.width = progress + '%';
+            }
+        }
+
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                new SlidePresentation();
+                initQRCodeModal();
+            });
+        } else {
+            new SlidePresentation();
+            initQRCodeModal();
+        }
+
+        // QR Code Modal Logic
+        function initQRCodeModal() {
+            const btn = document.getElementById('qrcodeBtn');
+            if (!btn) return;
+
+            // Create modal elements
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.id = 'qrcodeModal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <img src="qrcode.jpg" alt="公众号二维码">
+                    <h3>关注「歪斯Wise」</h3>
+                    <p>扫码关注公众号，获取更多AI产品干货</p>
+                    <button class="modal-close" onclick="closeQRCodeModal()">关闭</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            // Bind click event
+            btn.addEventListener('click', () => {
+                modal.classList.add('active');
+            });
+
+            // Close on overlay click
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeQRCodeModal();
+                }
+            });
+
+            // Close on ESC key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeQRCodeModal();
+                }
+            });
+        }
+
+        function closeQRCodeModal() {
+            const modal = document.getElementById('qrcodeModal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>
